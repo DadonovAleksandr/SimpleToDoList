@@ -1,4 +1,5 @@
 ﻿using SimpleToDoList.Models;
+using SimpleToDoList.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,8 +23,9 @@ namespace SimpleToDoList
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        private readonly string Path = $"{Environment.CurrentDirectory}\\todoDataList.json";
         private BindingList<TodoModel> _todoDataList;
+        private FileIOService _fileIOService;
 
         public MainWindow()
         {
@@ -32,13 +34,18 @@ namespace SimpleToDoList
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            _todoDataList = new BindingList<TodoModel>()
-            {
-                new TodoModel(){ Text = "Задача 1"},
-                new TodoModel(){ Text = "Задача 2"},
-                new TodoModel(){ Text = "Задача 3", IsDone=true},
-            };
+            _fileIOService = new FileIOService(Path);
 
+            try
+            {
+                _todoDataList = _fileIOService.LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                Close();
+            }
+            
             dgTodoList.ItemsSource = _todoDataList;
             _todoDataList.ListChanged += _todoDataList_ListChanged;
         }
@@ -49,7 +56,15 @@ namespace SimpleToDoList
                 e.ListChangedType == ListChangedType.ItemDeleted || 
                 e.ListChangedType == ListChangedType.ItemChanged)
             {
-
+                try
+                {
+                    _fileIOService.SaveData(sender);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    Close();
+                }
             }
 
         }
